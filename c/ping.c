@@ -3,7 +3,7 @@
 #include "sys/socket.h"
 
 /*
-# raw(7)
+# raw(7), ip(7)
 
 ## CAP_NET_RAW
 
@@ -31,6 +31,10 @@ If it isn't bound, all packets with the specified IP protocol are received.  In 
 ## Recvmsg, sendmsg
 
 [Intentionally left empty]
+
+## IP_TTL
+
+Set or retrieve the current time-to-live field that is used in every packet sent from this socket.
 */
 
 int open_socket(void) {
