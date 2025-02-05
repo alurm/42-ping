@@ -1,6 +1,6 @@
 {stdenv}:
 stdenv.mkDerivation {
-  src = ./.;
+  src = ./..;
   name = "ft_ping";
   installPhase = ''
     mkdir -p $out/bin

@@ -13,9 +13,9 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in {
       packages = {
-        default = pkgs.callPackage ./ft_ping.nix {};
+        default = pkgs.callPackage ./packages/ft_ping.nix {};
         # The subject: "You will take as reference the ping implementation from inetutils-2.0".
-        inetutils = pkgs.callPackage ./inetutils-2.0.nix {};
+        inetutils = pkgs.callPackage ./packages/inetutils-2.0.nix {};
       };
     });
 }
