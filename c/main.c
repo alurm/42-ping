@@ -16,7 +16,7 @@
 
 int main(void) {
     int raw_socket = try(
-        "Couldn't open the raw socket",
+        "Opening raw socket failed",
         socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
     );
 
@@ -44,5 +44,15 @@ int main(void) {
         .sin_addr.s_addr = htonl((127 << 8 * 3) + 0 + 0 + 1),
     };
 
-    try("Send failed", sendto(raw_socket, packet, sizeof packet, 0, (struct sockaddr *)&localhost, sizeof localhost));
+    for (int i = 1; i < 5; i++) {
+        try(
+            "Setting time to live failed",
+            setsockopt(raw_socket, IPPROTO_IP, IP_TTL, &(int){ i }, sizeof(int))
+        );
+
+        try(
+            "Sending a packet failed",
+            sendto(raw_socket, packet, sizeof packet, 0, (struct sockaddr *)&localhost, sizeof localhost)
+        );
+    }
 }
