@@ -5,17 +5,20 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <linux/icmp.h>
+#include <linux/ip.h>
 
 #define try(error_message, expression) ({ \
     ssize_t result = (expression); \
     if (result < 0) { \
-        perror(error_message); \
+        perror("ping: " error_message); \
         exit(1); \
     } \
     result; \
 })
 
 // "The checksum is the 16-bit ones's complement of the one's complement sum of the ICMP message starting with the ICMP Type."
+// https://en.wikipedia.org/wiki/Internet_checksum.
+// https://datatracker.ietf.org/doc/html/rfc1071, "Computing the Internet checksum".
 uint16_t calculate_icmp_checksum(char *packet, size_t length) {
     uint32_t sum = 0;
 
@@ -48,7 +51,7 @@ uint16_t calculate_icmp_checksum(char *packet, size_t length) {
 
 int main(void) {
     int raw_socket = try(
-        "Opening raw socket failed",
+        "opening the raw socket failed",
         socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
     );
 
@@ -58,6 +61,7 @@ int main(void) {
 
     struct icmphdr *packet_as_icmp_header = (void *)packet;
 
+    // To-do: include the current time in the packet.
     *packet_as_icmp_header = (struct icmphdr){
         .type = ICMP_ECHO,
         .code = 0,
@@ -70,25 +74,53 @@ int main(void) {
         },
     };
 
-    packet_as_icmp_header->checksum = calculate_icmp_checksum(packet, sizeof packet);
+    // printf("%x\n", packet_as_icmp_header->checksum);
 
-    printf("%x\n", packet_as_icmp_header->checksum);
-
-    for (size_t i = 1; i < 5; i++) {
-        struct sockaddr_in localhost = {
+    for (size_t i = 1; i < 2; i++) {
+        struct sockaddr_in localhost_ip = {
             .sin_family = AF_INET,
             .sin_addr.s_addr = htonl((127 << 8 * 3) + 0 + 0 + 1),
         };
 
-        // Not necessarily needed.
-        try(
-            "Setting time to live failed",
-            setsockopt(raw_socket, IPPROTO_IP, IP_TTL, &(int){ i }, sizeof(int))
-        );
+        struct sockaddr *localhost_ptr = (void *)&localhost_ip;
+
+        // // Not necessarily needed.
+        // try(
+        //     "setting the time to live failed",
+        //     setsockopt(raw_socket, IPPROTO_IP, IP_TTL, &(int){ i }, sizeof(int))
+        // );
+
+        packet_as_icmp_header->un.echo.sequence = i;
+
+        packet_as_icmp_header->checksum = 0;
+        packet_as_icmp_header->checksum = calculate_icmp_checksum(packet, sizeof packet);
 
         try(
-            "Sending a packet failed",
-            sendto(raw_socket, packet, sizeof packet, 0, (struct sockaddr *)&localhost, sizeof localhost)
+            "sending a packet failed",
+            sendto(raw_socket, packet, sizeof packet, 0, localhost_ptr, sizeof localhost_ip)
         );
+
+        // Total length for an IP packet occupies 16 bits.
+        // https://www.rfc-editor.org/rfc/rfc791.html.
+        char receive_buffer[1 << 16];
+
+        struct iphdr *ip = (void *)receive_buffer;
+
+        // To-do: consider filtering out the replies.
+        // For localhost, ping requests shouldn't be printed.
+        try(
+            "receiving a packet failed",
+            // recvfrom (should check if the source address is of interest?)
+            recv(raw_socket, receive_buffer, sizeof receive_buffer, 0)
+        );
+
+        struct icmphdr *icmp = (void *)(receive_buffer + sizeof(struct iphdr));
+
+        printf("code: %d\n", icmp->code);
+        printf("type: %d\n", icmp->type);
+        printf("seq: %d\n", icmp->un.echo.sequence);
+        printf("\n");
+        
+        printf("total length: %d\n", ntohs(ip->tot_len));
     }
 }
