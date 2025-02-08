@@ -16,3 +16,4 @@ clean:
 
 fclean: clean
 	rm -f ft_ping
+	rm -f wip
