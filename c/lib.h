@@ -18,13 +18,6 @@
     result; \
 })
 
-uint16_t calculate_icmp_checksum(struct icmphdr *packet_as_icmp_header, size_t size);
-void must(bool boolean, char *error_message);
-struct icmphdr *make_new_echo_request_packet(void);
-int open_and_configure_raw_socket(void);
-struct sockaddr_in lookup_ip(void);
-void ping_once(int raw_socket, struct sockaddr_in ip);
-
 enum {
     // 21 is an arbitrary value.
     echo_request_data_size = wip() 21,
@@ -32,3 +25,19 @@ enum {
     // https://www.rfc-editor.org/rfc/rfc791.html "Internet protocol".
     echo_request_icmp_packet_size = echo_request_data_size + sizeof(struct icmphdr),
 };
+
+struct program_options {
+    bool have_time_to_live;
+    uint8_t time_to_live;
+    bool verbose;
+    char *host;
+};
+
+uint16_t calculate_icmp_checksum(struct icmphdr *packet_as_icmp_header, size_t size);
+void must(bool boolean, char *error_message);
+struct icmphdr *make_new_echo_request_packet(void);
+int open_and_configure_raw_socket(void);
+struct sockaddr_in lookup_ip(void);
+void ping_once(int raw_socket, struct sockaddr_in ip);
+[[noreturn]] void bug(char *error_message);
+struct program_options parse_program_options(int argc, char **argv);

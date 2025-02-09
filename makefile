@@ -7,6 +7,8 @@ sources := $(addprefix c/, \
 		open_and_configure_raw_socket \
 		lookup_ip \
 		ping_once \
+		bug \
+		parse_program_options \
 	) \
 )
 
