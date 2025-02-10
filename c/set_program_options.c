@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "library.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -85,7 +85,7 @@ bool parse_flag(struct raw_program_options *options, int argc, int *i, char *arg
 }
 
 struct raw_program_options parse_argv(int argc, char **argv) {
-    struct raw_program_options options = { raw_program_options_are_normal, .normal = { 0 } };
+    struct raw_program_options options = { raw_program_options_are_normal, .normal = {} };
 
     for (int i = 0; i < argc; i++) {
         char *arg = argv[i];
@@ -171,7 +171,7 @@ struct program_options set_program_options(int argc, char **argv) {
         struct program_options options = {
             .host = raw.normal.host,
             .verbose = raw.normal.be_verbose,
-            .identifier = htons(getpid() % (1 << 16)),
+            .identifier = htons(getpid() % (1 << (sizeof(options.identifier) * 8))),
         };
 
         if (raw.normal.time_to_live_specified) {

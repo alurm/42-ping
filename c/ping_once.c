@@ -1,3 +1,5 @@
+#include "library.h"
+
 #include <linux/ip.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
@@ -6,10 +8,9 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <errno.h>
 
-#include "lib.h"
-
-void ping_once(int raw_socket, struct sockaddr_in ip, struct program_options options) {
+struct ping_result ping_once(int raw_socket, struct sockaddr_in ip, struct program_options options) {
     {
         struct icmphdr *request = make_new_echo_request_packet(options.identifier);
 
@@ -17,25 +18,40 @@ void ping_once(int raw_socket, struct sockaddr_in ip, struct program_options opt
         try(
             -1,
             "failed to send an echo request",
-            sendto(raw_socket, request, echo_request_icmp_packet_size, 0, (void *)&ip, sizeof ip)
+            sendto(
+                raw_socket,
+                request,
+                echo_request_icmp_packet_size,
+                0,
+                (void *)&ip,
+                sizeof ip
+            )
         );
-        
+
         free(request);
     }
 
     {
         // The length of a datagram is up to 65535 octets.
         // https://www.rfc-editor.org/rfc/rfc791.html "Internet protocol"
-        char reply_buffer[1 << 16];
+        char reply_buffer[max_packet_size];
 
-        wip(should errors be handled more gracefully?)
-        try(
-            -1,
-            "failed to receive a packet",
-            wip(recv) recv(raw_socket, reply_buffer, sizeof reply_buffer, 0)
-        );
+        ssize_t recv_result = recv(raw_socket, reply_buffer, sizeof reply_buffer, 0);
+
+        if (recv_result == -1) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                return (struct ping_result) { .have_received_reply = false };
+            else {
+                perror("ping: failed to receive a packet");
+                exit(1);
+            }
+        }
 
         struct iphdr *ip = (void *)reply_buffer;
+
+        if (ntohs(ip->tot_len) != recv_result)
+            bug("packet's length is not equal to the amount of bytes received");
+
         struct icmphdr *icmp = (void *)(reply_buffer + sizeof(struct iphdr));
 
         if (icmp->type != ICMP_ECHOREPLY) bug("expected an ICMP echo reply");
@@ -47,7 +63,7 @@ void ping_once(int raw_socket, struct sockaddr_in ip, struct program_options opt
         char *ip_string_static = inet_ntoa((struct in_addr){ .s_addr = ip->saddr });
         char *ip_string = try(0, "strdup failed", strdup(ip_string_static));
 
-        wip()
+        wip(time)
         printf(
             "%zu bytes from %s: icmp_seq=%d ttl=%d time=[...] ms\n",
             icmp_size,
@@ -62,10 +78,13 @@ void ping_once(int raw_socket, struct sockaddr_in ip, struct program_options opt
         if (0)
             printf(
                 "IP Hdr Dump:\n"
-                wip()
                 "Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst     Data\n" wip()
-                wip()
                 "ICMP: type [...], code [...], size [...], id [...], seq [...]\n" wip()
             );
+
+        return (struct ping_result) {
+            .have_received_reply = true,
+            wip(time)
+        };
     }
 }

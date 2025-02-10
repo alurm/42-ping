@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "library.h"
 
 #include <netinet/in.h>
 #include <stdio.h>
@@ -28,27 +28,42 @@ int main(int argc, char **argv) {
 
     printf("\n");
 
-    wip(should be endless and have a sleep period)
-    wip(sigint)
+    struct timeval *times = {};
+
     size_t packets_transmitted = 0;
-    for (; packets_transmitted < 5; packets_transmitted++) {
-        ping_once(
+    size_t packets_received = 0;
+
+    wip(sigint)
+    wip(interval?)
+    for (; packets_transmitted < 3; packets_transmitted++) {
+        struct ping_result result = ping_once(
             raw_socket,
             ip,
             options
         );
+
+        if (result.have_received_reply) {
+            push(times, packets_received, result.time);
+        }
+
+        printf("packets received: %zu\n", packets_received);
     }
 
-    wip(
-        packets received, ...,
-        ip netns (not related)
-    )
+    for (size_t i = 0; i < packets_received; i++)
+        printf("%ld\n", times[i].tv_sec);
+
+    free(times);
+
+    size_t packet_loss = (1 - ((double)packets_received / (double)packets_transmitted)) * 100;
+
     printf(
         "--- %s ping statistics ---\n"
-        "%zu packets transmitted, [...] packets received, [...]%% packet loss\n"
+        "%zu packets transmitted, %zu packets received, %zu%% packet loss\n"
         "round-trip min/avg/max/stddev = [...]/[...]/[...]/[...] ms\n",
         options.host,
-        packets_transmitted
+        packets_transmitted,
+        packets_received,
+        packet_loss
     );
 
     free(ip_string);

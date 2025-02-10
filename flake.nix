@@ -23,6 +23,7 @@
         # https://nixos.wiki/wiki/Using_Clang_instead_of_GCC.
         packages = [
           packages.inetutils
+          pkgs.valgrind
         ];
       };
     });

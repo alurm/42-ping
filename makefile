@@ -12,11 +12,14 @@ sources := $(addprefix c/, \
 	) \
 )
 
-ft_ping: $(sources) makefile c/lib.h
-	cc -W{all,extra,error} -o $@ -D release $(sources)
+ft_ping: $(sources) makefile c/library.h
+	cc -W{all,extra,error} --std c23 -o $@ -D release $(sources)
 
-wip: $(sources) makefile c/lib.h
-	cc -W{all,extra} -g -o $@ $(sources)
+wip: $(sources) makefile c/library.h
+	cc -W{all,extra} --std c23 -g -o $@ $(sources)
+
+# run: wip
+# 	valgrind ./wip wip()
 
 # The school 42 boilerplate.
 include 42.mk

@@ -1,6 +1,6 @@
 // IWYU pragma: no_include "bits/socket_type.h"
 
-#include "lib.h"
+#include "library.h"
 
 #include <sys/socket.h>
 #include <linux/icmp.h>
@@ -34,19 +34,26 @@ int open_and_configure_raw_socket(struct program_options options) {
             setsockopt(raw_socket, IPPROTO_IP, IP_TTL, &options.time_to_live, sizeof(options.time_to_live))
         );
     
-    wip(as is, this does not work. we need more ICMP types. for example, try with ttl set to 2)
-    // Filter out all message types except ICMP echo replies.
-    // Not sure how other types of messages should be handled by ping.
-    // Filtering them out seems acceptable.
-
     struct icmp_filter filter = {
-        .data = ~(1 << ICMP_ECHOREPLY),
+        .data =
+            ~((1 << ICMP_ECHOREPLY) | (1 << ICMP_TIME_EXCEEDED))
+        ,
     };
 
     try(
         -1,
         "failed to set the socket option to only leave ICMP echo replies",
         setsockopt(raw_socket, IPPROTO_RAW, ICMP_FILTER, &filter, sizeof(struct icmp_filter))
+    );
+
+    struct timeval receive_timeout = {
+        .tv_sec = 3, wip(an arbitrary value)
+    };
+
+    try(
+        -1,
+        "failed to set the socket option to set a receive timeout",
+        setsockopt(raw_socket, SOL_SOCKET, SO_RCVTIMEO, &receive_timeout, sizeof receive_timeout)
     );
 
     return raw_socket;
