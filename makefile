@@ -20,3 +20,6 @@ wip: $(sources) makefile c/lib.h
 
 # The school 42 boilerplate.
 include 42.mk
+
+clean:
+	rm -rf ~
