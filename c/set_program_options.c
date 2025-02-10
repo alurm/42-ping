@@ -194,6 +194,4 @@ struct program_options set_program_options(int argc, char **argv) {
 
         return options;
     }
-
-    bug("unreachable");
 }

@@ -5,7 +5,7 @@ sources := $(addprefix c/, \
 		calculate_icmp_checksum \
 		make_new_echo_request_packet \
 		open_and_configure_raw_socket \
-		lookup_ip_and_name \
+		lookup_ip \
 		ping_once \
 		bug \
 		set_program_options \

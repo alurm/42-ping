@@ -36,18 +36,11 @@ struct program_options {
     uint16_t identifier;
 };
 
-struct ip_and_name {
-    struct sockaddr_in ip;
-    wip()
-    // Name is currently unused, since inetutils doesn't use it (apparently).
-    char *name;
-};
-
 uint16_t calculate_icmp_checksum(struct icmphdr *, size_t);
 void must(bool, char *);
 struct icmphdr *make_new_echo_request_packet(uint16_t);
 int open_and_configure_raw_socket(struct program_options);
-struct ip_and_name lookup_ip_and_name(char *);
+struct sockaddr_in lookup_ip(char *);
 void ping_once(int, struct sockaddr_in, struct program_options);
 [[noreturn]] void bug(char *);
 struct program_options set_program_options(int, char **);

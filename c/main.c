@@ -10,9 +10,9 @@ int main(int argc, char **argv) {
 
     int raw_socket = open_and_configure_raw_socket(options);
 
-    struct ip_and_name ip_and_name = lookup_ip_and_name(options.host);
+    struct sockaddr_in ip = lookup_ip(options.host);
 
-    char *ip_string_static = inet_ntoa(ip_and_name.ip.sin_addr);
+    char *ip_string_static = inet_ntoa(ip.sin_addr);
 
     char *ip_string = try(0, "strdup failed", strdup(ip_string_static));
 
@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     for (; packets_transmitted < 5; packets_transmitted++) {
         ping_once(
             raw_socket,
-            ip_and_name.ip,
+            ip,
             options
         );
     }
@@ -52,5 +52,4 @@ int main(int argc, char **argv) {
     );
 
     free(ip_string);
-    free(ip_and_name.name);
 }
