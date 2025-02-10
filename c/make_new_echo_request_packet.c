@@ -7,7 +7,7 @@
 #include <linux/icmp.h>
 #include <stdlib.h>
 
-struct icmphdr *make_new_echo_request_packet(void) {
+struct icmphdr *make_new_echo_request_packet(uint16_t identifier) {
     static uint16_t sequence;
 
     sequence++;
@@ -23,17 +23,10 @@ struct icmphdr *make_new_echo_request_packet(void) {
         .code = 0,
         .checksum = 0,
         .un.echo = {
-            .id = htons(getpid() % (1 << 16)),
+            .id = identifier,
             .sequence = htons(sequence),
         }
     };
-
-    wip(maybe we can add a --ttl flag)
-    // try(
-    //     -1,
-    //     "setting the time to live failed",
-    //     setsockopt(raw_socket, IPPROTO_IP, IP_TTL, &(int) { ... }, sizeof(int))
-    // );
 
     wip(consider including the current time in the data)
     char data[echo_request_data_size] = {

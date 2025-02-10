@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <netinet/in.h>
+#include <sys/types.h>
 
 #ifndef release
 #define wip(...)
@@ -31,13 +33,21 @@ struct program_options {
     uint8_t time_to_live;
     bool verbose;
     char *host;
+    uint16_t identifier;
 };
 
-uint16_t calculate_icmp_checksum(struct icmphdr *packet_as_icmp_header, size_t size);
-void must(bool boolean, char *error_message);
-struct icmphdr *make_new_echo_request_packet(void);
-int open_and_configure_raw_socket(void);
-struct sockaddr_in lookup_ip(void);
-void ping_once(int raw_socket, struct sockaddr_in ip);
-[[noreturn]] void bug(char *error_message);
-struct program_options parse_program_options(int argc, char **argv);
+struct ip_and_name {
+    struct sockaddr_in ip;
+    wip()
+    // Name is currently unused, since inetutils doesn't use it (apparently).
+    char *name;
+};
+
+uint16_t calculate_icmp_checksum(struct icmphdr *, size_t);
+void must(bool, char *);
+struct icmphdr *make_new_echo_request_packet(uint16_t);
+int open_and_configure_raw_socket(struct program_options);
+struct ip_and_name lookup_ip_and_name(char *);
+void ping_once(int, struct sockaddr_in, struct program_options);
+[[noreturn]] void bug(char *);
+struct program_options set_program_options(int, char **);

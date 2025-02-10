@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 struct raw_program_options {
     enum {
@@ -112,7 +113,7 @@ struct raw_program_options parse_argv(int argc, char **argv) {
     return options;
 }
 
-struct program_options parse_program_options(int argc, char **argv) {
+struct program_options set_program_options(int argc, char **argv) {
     must(argc > 0, "expected the argv not to be empty");
     struct raw_program_options raw = parse_argv(argc - 1, argv + 1);
     switch (raw.type)
@@ -167,7 +168,11 @@ struct program_options parse_program_options(int argc, char **argv) {
         exit(1);
     } else
     case raw_program_options_are_normal: if (1) {
-        struct program_options options = { 0 };
+        struct program_options options = {
+            .host = raw.normal.host,
+            .verbose = raw.normal.be_verbose,
+            .identifier = htons(getpid() % (1 << 16)),
+        };
 
         if (raw.normal.time_to_live_specified) {
             uint8_t time_to_live = atoi(raw.normal.time_to_live);

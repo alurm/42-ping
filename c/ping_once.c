@@ -5,12 +5,13 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <string.h>
 
 #include "lib.h"
 
-void ping_once(int raw_socket, struct sockaddr_in ip) {
+void ping_once(int raw_socket, struct sockaddr_in ip, struct program_options options) {
     {
-        struct icmphdr *request = make_new_echo_request_packet();
+        struct icmphdr *request = make_new_echo_request_packet(options.identifier);
 
         wip(should errors be handled more gracefully?)
         try(
@@ -37,19 +38,34 @@ void ping_once(int raw_socket, struct sockaddr_in ip) {
         struct iphdr *ip = (void *)reply_buffer;
         struct icmphdr *icmp = (void *)(reply_buffer + sizeof(struct iphdr));
 
-        wip() must(icmp->type == ICMP_ECHOREPLY, "expected an ICMP echo reply");
+        if (icmp->type != ICMP_ECHOREPLY) bug("expected an ICMP echo reply");
 
         // "Internet Header Length is the length of the internet header in 32 bit words".
         // https://datatracker.ietf.org/doc/html/rfc791 "Internet protocol"
         size_t icmp_size = ntohs(ip->tot_len) - ip->ihl * 4;
 
-        wip() printf(
-            "%zu bytes from [...]: icmp_seq=%d ttl=%d time=[...] ms\n",
+        char *ip_string_static = inet_ntoa((struct in_addr){ .s_addr = ip->saddr });
+        char *ip_string = try(0, "strdup failed", strdup(ip_string_static));
+
+        wip()
+        printf(
+            "%zu bytes from %s: icmp_seq=%d ttl=%d time=[...] ms\n",
             icmp_size,
+            ip_string,
             ntohs(icmp->un.echo.sequence),
             ip->ttl
         );
 
-        wip(dump the IPv4 header if -v is given)
+        free(ip_string);
+
+        wip(dump the IPv4 header if -v is given if bad message comes)
+        if (0)
+            printf(
+                "IP Hdr Dump:\n"
+                wip()
+                "Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src      Dst     Data\n" wip()
+                wip()
+                "ICMP: type [...], code [...], size [...], id [...], seq [...]\n" wip()
+            );
     }
 }

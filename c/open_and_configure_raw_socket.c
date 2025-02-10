@@ -20,13 +20,21 @@
 // So we don't currently set it.
 //
 // References: ip(7), raw(7).
-int open_and_configure_raw_socket(void) {
+int open_and_configure_raw_socket(struct program_options options) {
     int raw_socket = try(
         -1,
         "opening the raw socket failed",
         socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
     );
- 
+
+    if (options.have_time_to_live)
+        try(
+            -1,
+            "setting the time to live failed",
+            setsockopt(raw_socket, IPPROTO_IP, IP_TTL, &options.time_to_live, sizeof(options.time_to_live))
+        );
+    
+    wip(as is, this does not work. we need more ICMP types. for example, try with ttl set to 2)
     // Filter out all message types except ICMP echo replies.
     // Not sure how other types of messages should be handled by ping.
     // Filtering them out seems acceptable.
