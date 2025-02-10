@@ -1,5 +1,5 @@
-{stdenv}:
-stdenv.mkDerivation {
+{clangStdenv}:
+clangStdenv.mkDerivation {
   src = ./..;
   name = "ft_ping";
   installPhase = ''

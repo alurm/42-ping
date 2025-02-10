@@ -11,11 +11,20 @@
   }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
-    in {
+    in rec {
       packages = {
         default = pkgs.callPackage ./packages/ft_ping.nix {};
         # The subject: "You will take as reference the ping implementation from inetutils-2.0".
         inetutils = pkgs.callPackage ./packages/inetutils-2.0.nix {};
+      };
+
+      devShells.default = pkgs.mkShell {
+        # With pkgs.clangStdenv, <stdint.h> is missing somehow.
+        # https://nixos.wiki/wiki/Using_Clang_instead_of_GCC.
+        packages = [
+          pkgs.stdenv
+          packages.inetutils
+        ];
       };
     });
 }
