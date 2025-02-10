@@ -13,6 +13,7 @@ re:
 	$(MAKE)
 
 clean:
+	rm -rf ~
 
 fclean: clean
 	rm -f ft_ping
