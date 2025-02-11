@@ -29,7 +29,9 @@ struct sockaddr_in lookup_ip(char *name) {
         "expected the result from getaddrinfo to be an IPv4 address"
     );
 
+    struct sockaddr_in ip = *(typeof(ip) *)ip_ptr;
+
     freeaddrinfo(getaddrinfo_result);
 
-    return *(struct sockaddr_in *)ip_ptr;
+    return ip;
 }

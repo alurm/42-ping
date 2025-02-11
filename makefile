@@ -18,8 +18,10 @@ ft_ping: $(sources) makefile c/library.h
 wip: $(sources) makefile c/library.h
 	cc -W{all,extra} --std c23 -g -o $@ $(sources)
 
-# run: wip
-# 	valgrind ./wip wip()
+.PHONY: valgrind
+
+valgrind: wip
+	sudo valgrind ./wip google.com
 
 # The school 42 boilerplate.
 include 42.mk

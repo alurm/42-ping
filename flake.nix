@@ -13,17 +13,16 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in rec {
       packages = {
-        ft_ping = pkgs.callPackage ./packages/ft_ping.nix {};
-        # The subject: "You will take as reference the ping implementation from inetutils-2.0".
-        inetutils = pkgs.callPackage ./packages/inetutils-2.0.nix {};
+        default = packages.ft_ping;
+        ft_ping = pkgs.callPackage ./packages/ft_ping.nix;
+        inetutils-2-0 = pkgs.callPackage ./packages/inetutils-2.0.nix {};
       };
 
       devShells.default = pkgs.mkShell {
-        # With pkgs.clangStdenv, <stdint.h> is missing somehow.
-        # https://nixos.wiki/wiki/Using_Clang_instead_of_GCC.
         packages = [
-          packages.inetutils
+          pkgs.clang
           pkgs.valgrind
+          packages.inetutils-2-0
         ];
       };
     });
