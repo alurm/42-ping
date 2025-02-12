@@ -1,6 +1,5 @@
 #include "library.h"
 
-#include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -30,52 +29,94 @@ struct raw_program_options {
             // We don't allow multiple hosts to be specified.
             // Having multiple hosts doesn't make sense given the flags we implement.
             char *host;
+
+            bool have_count;
+            char *count;
         } normal;
     };
 };
 
+struct decimal_number_parse {
+    bool ok;
+    ssize_t number;
+};
+
+struct decimal_number_parse parse_decimal_number(char *string) {
+    ssize_t number = atol(string);
+    char *pointer;
+    try(
+        -1,
+        "malloc failed",
+        asprintf(&pointer, "%ld", number)
+    );
+    if (strcmp(pointer, string) != 0) {
+        free(pointer);
+        return (struct decimal_number_parse){ .ok = false };
+    }
+    free(pointer);
+    return (struct decimal_number_parse){
+        .ok = true,
+        .number = number,
+    };
+}
+
+bool match(char *string, char **options) {
+    while (*options != 0) {
+        if (strcmp(string, *options) == 0)
+            return true;
+        options++;
+    }
+
+    return false;
+}
+
+#define match(string, ...) match( \
+    string, \
+    (char*[]){ \
+        __VA_ARGS__, \
+        0 \
+    } \
+)
+
+// Specifying multiple short options (-ab) in one arg is not supported.
+// Use multiple args instead (-a -b).
 // --key=value style of options is not supported.
 // Use --key value instead.
 bool parse_flag(struct raw_program_options *options, int argc, int *i, char *arg, char **argv) {
     // We know that arg[0] is '-'.
-    switch (arg[1])
-    case '?': if (1) {
+    char *flag = arg + 1;
+
+    if (match(flag, "?", "-help")) {
         *options = (struct raw_program_options){ raw_program_options_help_flag_set, .no_initializer = 0 };
         return false;
-    } else
-    case 'v': if (1) {
+    }
+    else if (match(flag, "v", "-verbose")) {
         options->normal.be_verbose = true;
         return true;
-    } else
-    case '-': if (1) {
-        char *long_flag = arg + 2;
-        if (strcmp(long_flag, "ttl") == 0 || strcmp(long_flag, "time-to-live") == 0) {
-            (*i)++;
-            if (*i == argc) {
-                *options = (struct raw_program_options){
-                    raw_program_options_required_argument_is_not_provided_for,
-                    .required_argument_is_not_provided_for = arg,
-                };
-                return false;
-            }
-            options->normal.time_to_live_specified = true;
-            options->normal.time_to_live = argv[*i];
-            return true;
-        } else if (strcmp(long_flag, "verbose") == 0) {
-            options->normal.be_verbose = true;
-            return true;
-        } else if (strcmp(long_flag, "help") == 0) {
-            *options = (struct raw_program_options){ raw_program_options_help_flag_set, .no_initializer = 0 };
-            return false;
-        } else {
+    }
+    // These take an argument.
+    else if (match(flag, "-ttl", "-time-to-live", "c", "-count")) {
+        (*i)++;
+        if (*i == argc) {
             *options = (struct raw_program_options){
-                raw_program_options_unknown_flag_set,
-                .unknown_flag = arg,
+                raw_program_options_required_argument_is_not_provided_for,
+                .required_argument_is_not_provided_for = arg,
             };
             return false;
         }
-    } else
-    default: {
+
+        if (0) {}
+        else if (match(flag, "-ttl", "-time-to-live")) {
+            options->normal.time_to_live_specified = true;
+            options->normal.time_to_live = argv[*i];
+        }
+        else if (match(flag, "c", "-count")) {
+            options->normal.have_count = true;
+            options->normal.count = argv[*i];
+        }
+        return true;
+    }
+    else {
         *options = (struct raw_program_options){
             raw_program_options_unknown_flag_set,
             .unknown_flag = arg,
@@ -102,12 +143,10 @@ struct raw_program_options parse_argv(int argc, char **argv) {
         }
     }
 
-    if (options.type != raw_program_options_are_normal)
-        bug("options are abnormal");
+    must(options.type == raw_program_options_are_normal, "options are abnormal");
 
     if (options.normal.host == 0) return (struct raw_program_options){
         .type = raw_program_options_no_hosts,
-        .no_initializer = 0,
     };
 
     return options;
@@ -115,7 +154,7 @@ struct raw_program_options parse_argv(int argc, char **argv) {
 
 struct program_options set_program_options(int argc, char **argv) {
     must(argc > 0, "expected the argv not to be empty");
-    struct raw_program_options raw = parse_argv(argc - 1, argv + 1);
+    auto raw = parse_argv(argc - 1, argv + 1);
     switch (raw.type)
     case raw_program_options_no_hosts: if (1) {
         fprintf(
@@ -142,9 +181,10 @@ struct program_options set_program_options(int argc, char **argv) {
             "\n"
             " Options:\n"
             "\n"
-            "  --ttl N, --time-to-live N: specify N as time-to-live, must be between 1 and 255\n"
-            "  -v, --verbose:             verbose output\n"
             "  -?, --help:                give this help list\n"
+            "  -v, --verbose:             verbose output\n"
+            "  --ttl N, --time-to-live N: specify N as time-to-live, must be between 1 and 255\n"
+            "  -c N, --count N:           stop after sending N packets\n"
             "\n"
             "Report bugs to /dev/null."
         );
@@ -168,28 +208,35 @@ struct program_options set_program_options(int argc, char **argv) {
         exit(1);
     } else
     case raw_program_options_are_normal: if (1) {
-        struct program_options options = {
-            .host = raw.normal.host,
-            .verbose = raw.normal.be_verbose,
-            .identifier = htons(getpid() % (1 << (sizeof(options.identifier) * 8))),
-        };
+        ping_statistics_data.host = raw.normal.host;
+        ping_statistics_data.verbose = raw.normal.be_verbose;
+        // The identifier occupies 16 bits.
+        ping_statistics_data.identifier = htons(getpid() % (1 << 16));
+
+        struct program_options options = {};
 
         if (raw.normal.time_to_live_specified) {
-            uint8_t time_to_live = atoi(raw.normal.time_to_live);
-            // Maximal value to fit in a uint8_t is 255, taking 3 digits plus one for the null byte.
-            char buffer[3 + 1];
-            sprintf(buffer, "%d", time_to_live);
-            if (strcmp(buffer, raw.normal.time_to_live) != 0 || time_to_live == 0) {
-                fprintf(
-                    stderr,
-                    "ping: time-to-live is either too big or too small: %s\n"
-                    "Try 'ping --help' for more information\n",
-                    raw.normal.time_to_live
-                );
-                exit(1);
-            }
+            auto p = parse_decimal_number(raw.normal.time_to_live);
+            must(
+                p.ok && p.number > 0 && p.number < 256,
+                "invalid time-to-live\n"
+                "Try 'ping --help' for more information"
+            );
+
             options.have_time_to_live = true;
-            options.time_to_live = time_to_live;
+            options.time_to_live = p.number;
+        }
+
+        if (raw.normal.have_count) {
+            auto p = parse_decimal_number(raw.normal.count);
+            must(
+                p.ok && p.number >= 0,
+                "invalid count\n"
+                "Try 'ping --help' for more infromation"
+            );
+
+            options.have_count = true;
+            options.count = p.number;
         }
 
         return options;

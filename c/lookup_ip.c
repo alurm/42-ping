@@ -6,8 +6,9 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <string.h>
 
-struct sockaddr_in lookup_ip(char *name) {
+struct ip_lookup_result lookup_ip(char *name) {
     struct addrinfo *getaddrinfo_result;
 
     int error = getaddrinfo(
@@ -17,10 +18,7 @@ struct sockaddr_in lookup_ip(char *name) {
             &getaddrinfo_result
     );
 
-    if (error != 0) {
-        fprintf(stderr, "ping: getaddrinfo failed: %s\n", gai_strerror(error));
-        exit(1);
-    }
+    must(error == 0, "unknown host");
 
     struct sockaddr *ip_ptr = getaddrinfo_result->ai_addr;
 
@@ -29,9 +27,16 @@ struct sockaddr_in lookup_ip(char *name) {
         "expected the result from getaddrinfo to be an IPv4 address"
     );
 
-    struct sockaddr_in ip = *(typeof(ip) *)ip_ptr;
+    auto ip = *(struct sockaddr_in *)ip_ptr;
 
     freeaddrinfo(getaddrinfo_result);
 
-    return ip;
+    char *string_static = inet_ntoa(ip.sin_addr);
+
+    char *string = try(0, "strdup failed", strdup(string_static));
+
+    return (struct ip_lookup_result){
+        .ip = ip,
+        .string = string,
+    };
 }

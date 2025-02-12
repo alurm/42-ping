@@ -47,7 +47,7 @@ int open_and_configure_raw_socket(struct program_options options) {
     );
 
     struct timeval receive_timeout = {
-        .tv_sec = 3, wip(an arbitrary value)
+        .tv_sec = receive_timeout_seconds,
     };
 
     try(
