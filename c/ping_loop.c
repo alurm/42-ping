@@ -1,6 +1,7 @@
 #include "library.h"
 
 #include <unistd.h>
+#include <netinet/in.h>
 
 void ping_loop(
     int socket,

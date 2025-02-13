@@ -1,21 +1,7 @@
-sources := $(addprefix c/, \
-	$(addsuffix .c, \
-		main \
-		must \
-		calculate_icmp_checksum \
-		make_new_echo_request_packet \
-		open_and_configure_raw_socket \
-		lookup_ip \
-		ping_once \
-		ping_loop \
-		print_ping_footer \
-		print_ping_header \
-		set_program_options \
-	) \
-)
+sources := $(wildcard c/*.c)
 
-dependencies = $(sources) makefile c/library.h
-common_arguments = -W{all,extra} -lm --std c23 -o $@ $(sources)
+dependencies = $(sources) makefile 42.mk c/library.h
+common_arguments = -O2 -W{all,extra} -lm --std c23 -o $@ $(sources)
 
 ft_ping: $(dependencies)
 	cc -D release -Werror $(common_arguments)
@@ -23,8 +9,9 @@ ft_ping: $(dependencies)
 wip: $(dependencies)
 	cc -g $(common_arguments)
 
-.PHONY: valgrind
-valgrind: wip; sudo valgrind ./wip google.com
+.PHONY: test
+test: wip
+	./tests/run
 
 # The school 42 boilerplate.
 include 42.mk

@@ -9,7 +9,7 @@ struct icmphdr;
 // "The checksum is the 16-bit ones's complement of the one's complement sum of the ICMP message starting with the ICMP Type."
 // https://en.wikipedia.org/wiki/Internet_checksum.
 // https://datatracker.ietf.org/doc/html/rfc1071 "Computing the Internet checksum".
-uint16_t calculate_icmp_checksum(struct icmphdr *packet_as_icmp_header, size_t size) {
+uint16_t calculate_internet_checksum(struct icmphdr *packet_as_icmp_header, size_t size) {
     uint32_t sum = 0;
 
     char *packet = (void *)packet_as_icmp_header;

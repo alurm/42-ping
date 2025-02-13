@@ -1,16 +1,11 @@
 #define _POSIX_C_SOURCE 200809L
 #define _GNU_SOURCE
 
-#include <bits/types/struct_timeval.h>
-#include <stdint.h>
-#include <stddef.h>
+#include <sys/time.h>
 #include <linux/icmp.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <netinet/in.h>
-#include <sys/types.h>
-#include <linux/ip.h>
 
 #ifndef release
 #define wip(...)
@@ -45,6 +40,7 @@ enum {
     // 56 is the amount inetutils sends on my machine.
     // The subject suggests we have to do the same.
     echo_request_data_size = 56,
+
     // Note: "All hosts must be prepared to accept datagrams of up to 576 octets".
     // https://www.rfc-editor.org/rfc/rfc791.html "Internet protocol".
     icmp_echo_packet_size = echo_request_data_size + sizeof(struct icmphdr),
@@ -53,7 +49,7 @@ enum {
     // https://www.rfc-editor.org/rfc/rfc791.html "Internet protocol"
     max_packet_size = 1 << 16,
 
-    receive_timeout_seconds = 3,
+    receive_timeout_seconds = 2,
 
     ping_interval_seconds = 1,
 };
@@ -87,7 +83,19 @@ extern struct ping_statistics_data {
     size_t identifier;
 } ping_statistics_data;
 
-uint16_t calculate_icmp_checksum(struct icmphdr *, size_t);
+struct pong {
+    enum {
+        pong_time_exceeded,
+        pong_ok,
+        pong_no_response,
+    } status;
+    struct iphdr *ip;
+    struct icmphdr *icmp;
+    size_t icmp_size;
+    double delta;
+};
+
+uint16_t calculate_internet_checksum(struct icmphdr *, size_t);
 void must(bool, char *);
 struct icmphdr *make_new_echo_request_packet(void);
 int open_and_configure_raw_socket(struct program_options);
@@ -97,3 +105,6 @@ struct program_options set_program_options(int, char **);
 void print_ping_header(char *);
 void print_ping_footer(void);
 void ping_loop(int, struct sockaddr_in, struct program_options);
+void handle_signals(void);
+void ping_dump_packet(struct iphdr *ip, struct icmphdr *icmp, size_t icmp_size);
+struct pong receive_pong(int socket, char *buffer);

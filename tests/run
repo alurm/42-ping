@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -o pipefail
+
+a=$(mktemp) || exit 1
+b=$(mktemp) || exit 1
+
+sudo ping 2>&1 | sed "s/ or 'ping --usage'//" > "$a"
+sudo ./wip > "$b" 2>&1
+diff "$a" "$b" || exit 1
+
+sudo ping google.com -c 1 | ./tests/anonymize > "$a"
+sudo ./wip google.com -c 1 | ./tests/anonymize > "$b"
+diff "$a" "$b" || exit 1
+
+sudo ping google.com -c 1 --ttl 2 -v | ./tests/anonymize > "$a"
+sudo ./wip google.com -c 1 --ttl 2 -v | ./tests/anonymize > "$b"
+diff "$a" "$b" || exit 1
+
+sudo sh -c './wip unexistant.host 2>&1' > "$a"
+sudo sh -c 'ping unexistant.host 2>&1' > "$b"
+diff "$a" "$b" || exit 1
+
+sudo ping localhost -c 1 | head -n 1 > "$a"
+sudo ./wip localhost -c 1 | head -n 1 > "$b"
+diff "$a" "$b" || exit 1
+
+sudo valgrind --error-exitcode=2 ping -c 1 google.com --ttl 2 -v > /dev/null 2>&1
+test "$?" = 2 && exit 1
+
+true
+
+# Manual tests:
+# 
+# Test that ^C works.
+# 
+# With the network disabled:
+# sudo ping 1.2.3.4 > "$a" 2>&1
+# sudo ./wip 1.2.3.4 > "$b" 2>&1
+# diff "$a" "$b" || exit 1

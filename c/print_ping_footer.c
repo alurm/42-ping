@@ -2,11 +2,15 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <stdarg.h>
 
-// wip(mark as printf-like).
-ssize_t signal_safe_printf(size_t buffer_size, char *format, ...) {
+// IWYU pragma: no_include "__stdarg_va_arg.h"
+#include <stdarg.h> // IWYU pragma: keep
+
+__attribute__((format(printf, 2, 3)))
+static ssize_t signal_safe_printf(size_t buffer_size, char *format, ...) {
     // An array of variable length.
     char buffer[buffer_size];
 
@@ -21,7 +25,7 @@ ssize_t signal_safe_printf(size_t buffer_size, char *format, ...) {
 }
 
 void print_ping_footer(void) {
-    must(ping_statistics_data.transmitted != 0, "no packets transmitted");
+    if (ping_statistics_data.transmitted == 0) exit(1);
 
     size_t packet_loss = (1 - ((double)ping_statistics_data.received / (double)ping_statistics_data.transmitted)) * 100;
     

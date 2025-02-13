@@ -1,0 +1,10 @@
+#!/usr/bin/env -S sed -f
+s/(.*)/<an ip>/g
+s/from .*:/from <...>/g
+s/ttl=.*/ttl <...>/g
+s/stddev = .*/statistics <...>/g
+s/, id .*/, id <...>/g
+# Filter out the IP headers.
+s/^ 4.*/<ip header>/g
+# Filter out the ICMP headers.
+s/^ICMP: type.*/<icmp header>/g

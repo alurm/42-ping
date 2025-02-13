@@ -1,5 +1,8 @@
 #include "library.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+
 void print_ping_header(char *ip) {
     printf(
         "PING %s (%s): %d data bytes",

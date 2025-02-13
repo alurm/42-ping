@@ -41,7 +41,7 @@ struct decimal_number_parse {
     ssize_t number;
 };
 
-struct decimal_number_parse parse_decimal_number(char *string) {
+static struct decimal_number_parse parse_decimal_number(char *string) {
     ssize_t number = atol(string);
     char *pointer;
     try(
@@ -60,7 +60,7 @@ struct decimal_number_parse parse_decimal_number(char *string) {
     };
 }
 
-bool match(char *string, char **options) {
+static bool match(char *string, char **options) {
     while (*options != 0) {
         if (strcmp(string, *options) == 0)
             return true;
@@ -82,7 +82,7 @@ bool match(char *string, char **options) {
 // Use multiple args instead (-a -b).
 // --key=value style of options is not supported.
 // Use --key value instead.
-bool parse_flag(struct raw_program_options *options, int argc, int *i, char *arg, char **argv) {
+static bool parse_flag(struct raw_program_options *options, int argc, int *i, char *arg, char **argv) {
     // We know that arg[0] is '-'.
     char *flag = arg + 1;
 
@@ -125,7 +125,7 @@ bool parse_flag(struct raw_program_options *options, int argc, int *i, char *arg
     }
 }
 
-struct raw_program_options parse_argv(int argc, char **argv) {
+static struct raw_program_options parse_argv(int argc, char **argv) {
     struct raw_program_options options = { raw_program_options_are_normal, .normal = {} };
 
     for (int i = 0; i < argc; i++) {
@@ -153,6 +153,9 @@ struct raw_program_options parse_argv(int argc, char **argv) {
 }
 
 struct program_options set_program_options(int argc, char **argv) {
+    handle_signals();
+    // This can matter, since we write(2) directly sometimes.
+    setlinebuf(stdout);
     must(argc > 0, "expected the argv not to be empty");
     auto raw = parse_argv(argc - 1, argv + 1);
     switch (raw.type)
@@ -188,7 +191,8 @@ struct program_options set_program_options(int argc, char **argv) {
             "\n"
             "Report bugs to /dev/null."
         );
-        exit(1);
+        // Replicating inetutils' ping.
+        exit(0);
     } else
     case raw_program_options_required_argument_is_not_provided_for: if (1) {
         fprintf(

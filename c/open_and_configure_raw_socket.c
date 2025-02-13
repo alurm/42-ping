@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 #include <linux/icmp.h>
 #include <netinet/in.h>
+#include <sys/time.h>
+#include <asm-generic/socket.h>
 
 // We're using SOCK_RAW and not SOCK_DGRAM.
 // SOCK_DGRAM is appealing since it makes the kernel compute checksums of messages for us.
@@ -18,6 +20,9 @@
 // This would make sent packets have to contain the IP header.
 // But it seems like TTL is the only option we need, for which we have IP_TTL.
 // So we don't currently set it.
+//
+// Update: IP_HDRINCL seems to be needed for header dumps.
+// We are dumping the headers of received packets, however.
 //
 // References: ip(7), raw(7).
 int open_and_configure_raw_socket(struct program_options options) {
@@ -55,6 +60,12 @@ int open_and_configure_raw_socket(struct program_options options) {
         "failed to set the socket option to set a receive timeout",
         setsockopt(raw_socket, SOL_SOCKET, SO_RCVTIMEO, &receive_timeout, sizeof receive_timeout)
     );
+
+    // try(
+    //     -1,
+    //     "failed to set the socket option to include the IP header in the buffer",
+    //     setsockopt(raw_socket, IPPROTO_IP, IP_HDRINCL, &(int){ 1 }, sizeof(int))
+    // );
 
     return raw_socket;
 }

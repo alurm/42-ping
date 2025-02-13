@@ -14,7 +14,7 @@
     in rec {
       packages = {
         default = packages.ft_ping;
-        ft_ping = pkgs.callPackage ./packages/ft_ping.nix;
+        ft_ping = pkgs.callPackage ./packages/ft_ping.nix {};
         inetutils-2-0 = pkgs.callPackage ./packages/inetutils-2.0.nix {};
       };
 

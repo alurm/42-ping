@@ -2,7 +2,6 @@
 
 #include <arpa/inet.h>
 #include <string.h>
-#include <unistd.h>
 #include <linux/icmp.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -39,7 +38,7 @@ struct icmphdr *make_new_echo_request_packet(void) {
         echo_request_data_size
     );
 
-    packet->checksum = calculate_icmp_checksum(packet, icmp_echo_packet_size);
+    packet->checksum = calculate_internet_checksum(packet, icmp_echo_packet_size);
 
     return packet;
 }
