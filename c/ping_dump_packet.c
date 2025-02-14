@@ -30,7 +30,7 @@ void ping_dump_packet(struct iphdr *ip, struct icmphdr *icmp, size_t icmp_size) 
     char *source = try(0, "malloc failed", strdup(inet_ntoa((struct in_addr){ .s_addr = ip->saddr })));
     char *destination = try(0, "malloc failed", strdup(inet_ntoa((struct in_addr){ .s_addr = ip->daddr })));
 
-    // Taken from inetutils-2.0's ping/ping_echo:/^print_ip_header/.
+    // Format used as a reference: inetutils-2.0's ping/ping_echo:/^print_ip_header/.
     // (Fun fact: this is probably a GPL violation, since the code below is licensed under MIT.)
 
     printf("Vr HL TOS  Len   ID Flg  off TTL Pro  cks      Src\tDst\tData\n");

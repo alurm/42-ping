@@ -26,8 +26,7 @@ struct raw_program_options {
             bool time_to_live_specified;
             char *time_to_live;
 
-            // We don't allow multiple hosts to be specified.
-            // Having multiple hosts doesn't make sense given the flags we implement.
+            // We don't allow for multiple hosts to be specified.
             char *host;
 
             bool have_count;
@@ -189,7 +188,7 @@ struct program_options set_program_options(int argc, char **argv) {
             "  --ttl N, --time-to-live N: specify N as time-to-live, must be between 1 and 255\n"
             "  -c N, --count N:           stop after sending N packets\n"
             "\n"
-            "Report bugs to /dev/null."
+            "Report bugs to /dev/null.\n"
         );
         // Replicating inetutils' ping.
         exit(0);
