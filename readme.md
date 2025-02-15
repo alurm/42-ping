@@ -6,6 +6,8 @@ This is an implementation of a [project](https://cdn.intra.42.fr/pdf/pdf/149425/
 
 There are Nix packages for this project and inetutils 2.0 (which is used as a reference) under `packages/`.
 
+A bunch of simple Bash tests can be run by typing `make test`.
+
 # Usage
 
 ```text
