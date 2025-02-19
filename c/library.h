@@ -31,7 +31,10 @@
     *push_macro_array_pointer = try( \
         0, \
         "realloc failed", \
-        realloc(*push_macro_array_pointer, (push_macro_size + 1) * sizeof(object)) \
+        realloc( \
+            *push_macro_array_pointer, \
+            nearest_power_of_two_above(push_macro_size) * sizeof(object) \
+        ) \
     ); \
     (*push_macro_array_pointer)[push_macro_size] = object; \
 } while (0)
